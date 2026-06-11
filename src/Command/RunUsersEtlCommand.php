@@ -49,6 +49,47 @@ class RunUsersEtlCommand extends Command
                 json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
             );
 
+            $csvDirectory = __DIR__ . '/../../storage/csv';
+$etlCsvPath = $csvDirectory . '/ETL_' . $date . '.csv';
+
+if (!is_dir($csvDirectory)) {
+    mkdir($csvDirectory, 0777, true);
+}
+
+$etlFile = fopen($etlCsvPath, 'w');
+
+fputcsv($etlFile, [
+    'id',
+    'first_name',
+    'last_name',
+    'gender',
+    'age',
+    'email',
+    'city',
+    'country',
+    'department',
+    'role'
+]);
+
+foreach ($data['users'] as $user) {
+    fputcsv($etlFile, [
+        $user['id'] ?? '',
+        $user['firstName'] ?? '',
+        $user['lastName'] ?? '',
+        $user['gender'] ?? '',
+        $user['age'] ?? '',
+        $user['email'] ?? '',
+        $user['address']['city'] ?? '',
+        $user['address']['country'] ?? '',
+        $user['company']['department'] ?? '',
+        $user['role'] ?? ''
+    ]);
+}
+
+fclose($etlFile);
+
+$io->writeln('ETL CSV file generated: ' . $etlCsvPath);
+
             $io->success('Raw JSON file generated successfully.');
             $io->writeln('File: ' . $jsonPath);
             $io->writeln('Users processed: ' . count($data['users']));
