@@ -9,6 +9,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use App\Service\SummaryGeneratorService;
+use App\Repository\ProcessRepository;
 
 #[AsCommand(
     name: 'app:run-users-etl',
@@ -18,7 +19,8 @@ class RunUsersEtlCommand extends Command
 {
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly SummaryGeneratorService $summaryGeneratorService
+        private readonly SummaryGeneratorService $summaryGeneratorService,
+        private readonly ProcessRepository $processRepository
     ) {
         parent::__construct();
     }
@@ -91,6 +93,7 @@ foreach ($data['users'] as $user) {
 fclose($etlFile);
 
 //Generate Summary
+//----------------
 $summaryPath = $csvDirectory . '/summary_' . $date . '.csv';
 $summary = $this->summaryGeneratorService->generate($data['users']);
 
@@ -114,7 +117,22 @@ fclose($summaryFile);
 
 $io->writeln('Summary CSV file generated: ' . $summaryPath);
 
-//end summary
+//------------
+
+//Insert to DB
+//--------------
+$processHeaderId = $this->processRepository->saveProcess(
+    date('Y-m-d'),
+    basename($jsonPath),
+    basename($etlCsvPath),
+    basename($summaryPath),
+    $data['users'],
+    $summary
+);
+
+$io->writeln('Database process saved with ID: ' . $processHeaderId);
+
+//-----------
 
 $io->writeln('ETL CSV file generated: ' . $etlCsvPath);
 
