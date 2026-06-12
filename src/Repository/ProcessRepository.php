@@ -96,4 +96,33 @@ class ProcessRepository
             throw $exception;
         }
     }
+
+    //Methods
+    //--------
+    public function getProcesses(): array
+{
+    $statement = $this->connection->query(
+        'SELECT id, execution_date, raw_file_name, etl_file_name, summary_file_name, total_records, inserted_at
+         FROM process_header
+         ORDER BY id DESC'
+    );
+
+    return $statement->fetchAll(PDO::FETCH_ASSOC);
+}
+
+public function getSummaryByProcessId(int $processId): array
+{
+    $statement = $this->connection->prepare(
+        'SELECT metric, metric_value, total_count
+         FROM summary_item
+         WHERE process_header_id = :process_id
+         ORDER BY metric, metric_value'
+    );
+
+    $statement->execute([
+        'process_id' => $processId,
+    ]);
+
+    return $statement->fetchAll(PDO::FETCH_ASSOC);
+}
 }
