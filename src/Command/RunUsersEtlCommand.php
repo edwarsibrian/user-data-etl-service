@@ -8,6 +8,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use App\Service\SummaryGeneratorService;
 
 #[AsCommand(
     name: 'app:run-users-etl',
@@ -16,7 +17,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 class RunUsersEtlCommand extends Command
 {
     public function __construct(
-        private readonly HttpClientInterface $httpClient
+        private readonly HttpClientInterface $httpClient,
+        private readonly SummaryGeneratorService $summaryGeneratorService
     ) {
         parent::__construct();
     }
@@ -87,6 +89,32 @@ foreach ($data['users'] as $user) {
 }
 
 fclose($etlFile);
+
+//Generate Summary
+$summaryPath = $csvDirectory . '/summary_' . $date . '.csv';
+$summary = $this->summaryGeneratorService->generate($data['users']);
+
+$summaryFile = fopen($summaryPath, 'w');
+
+fputcsv($summaryFile, [
+    'metric',
+    'value',
+    'count'
+]);
+
+foreach ($summary as $item) {
+    fputcsv($summaryFile, [
+        $item['metric'],
+        $item['value'],
+        $item['count'],
+    ]);
+}
+
+fclose($summaryFile);
+
+$io->writeln('Summary CSV file generated: ' . $summaryPath);
+
+//end summary
 
 $io->writeln('ETL CSV file generated: ' . $etlCsvPath);
 
