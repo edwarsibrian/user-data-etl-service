@@ -10,6 +10,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use App\Service\SummaryGeneratorService;
 use App\Repository\ProcessRepository;
+use App\Service\EncryptionService;
 
 #[AsCommand(
     name: 'app:run-users-etl',
@@ -20,7 +21,8 @@ class RunUsersEtlCommand extends Command
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly SummaryGeneratorService $summaryGeneratorService,
-        private readonly ProcessRepository $processRepository
+        private readonly ProcessRepository $processRepository,
+        private readonly EncryptionService $encryptionService
     ) {
         parent::__construct();
     }
@@ -133,6 +135,33 @@ $processHeaderId = $this->processRepository->saveProcess(
 $io->writeln('Database process saved with ID: ' . $processHeaderId);
 
 //-----------
+
+//Encryption
+//------------
+$encryptedDirectory = __DIR__ . '/../../storage/encrypted';
+
+if (!is_dir($encryptedDirectory)) {
+    mkdir($encryptedDirectory, 0777, true);
+}
+
+$this->encryptionService->encryptFile(
+    $jsonPath,
+    $encryptedDirectory . '/' . basename($jsonPath) . '.enc'
+);
+
+$this->encryptionService->encryptFile(
+    $etlCsvPath,
+    $encryptedDirectory . '/' . basename($etlCsvPath) . '.enc'
+);
+
+$this->encryptionService->encryptFile(
+    $summaryPath,
+    $encryptedDirectory . '/' . basename($summaryPath) . '.enc'
+);
+
+$io->writeln('Encrypted files generated successfully.');
+
+//----------
 
 $io->writeln('ETL CSV file generated: ' . $etlCsvPath);
 
