@@ -10,11 +10,17 @@ class ProcessRepository
 
     public function __construct()
     {
-        $host = $_ENV['DB_HOST'] ?? '127.0.0.1';
-        $port = $_ENV['DB_PORT'] ?? '3306';
-        $dbname = $_ENV['DB_NAME'] ?? 'user_data_etl';
-        $user = $_ENV['DB_USER'] ?? 'root';
+        $host = $_ENV['DB_HOST'] ?? null;
+        $port = $_ENV['DB_PORT'] ?? null;
+        $dbname = $_ENV['DB_NAME'] ?? null;
+        $user = $_ENV['DB_USER'] ?? null;
         $password = $_ENV['DB_PASSWORD'] ?? '';
+
+        if (!$host || !$port || !$dbname || !$user) {
+            throw new \RuntimeException(
+                'Database environment variables are not fully configured. Required: DB_HOST, DB_PORT, DB_NAME, DB_USER.'
+            );
+        }
 
         $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
 
