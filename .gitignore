@@ -13,3 +13,8 @@
 /storage/csv/*.csv
 /storage/encrypted/*
 ###< generated ETL files ###
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###
